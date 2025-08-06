@@ -146,3 +146,53 @@ export async function POST(request) {
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
+
+// Add this DELETE function to your existing blog API file (alongside GET and POST)
+
+// DELETE - Delete a blog
+export async function DELETE(request) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const slug = searchParams.get('slug');
+        const id = searchParams.get('id');
+        
+        if (!slug && !id) {
+            return NextResponse.json({ 
+                success: false,
+                error: "Either slug or id is required" 
+            }, { status: 400 });
+        }
+
+        // Find and delete the blog
+        let deletedBlog;
+        if (slug) {
+            deletedBlog = await BlogModel.findOneAndDelete({ slug });
+        } else {
+            deletedBlog = await BlogModel.findByIdAndDelete(id);
+        }
+        
+        if (!deletedBlog) {
+            return NextResponse.json({ 
+                success: false,
+                error: "Blog not found" 
+            }, { status: 404 });
+        }
+
+        return NextResponse.json({ 
+            success: true, 
+            message: "Blog deleted successfully",
+            deletedBlog: {
+                id: deletedBlog._id,
+                title: deletedBlog.title,
+                slug: deletedBlog.slug
+            }
+        });
+
+    } catch (error) {
+        console.error("Error in DELETE handler:", error);
+        return NextResponse.json({ 
+            success: false,
+            error: "Internal server error" 
+        }, { status: 500 });
+    }
+}

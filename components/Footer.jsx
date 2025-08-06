@@ -5,14 +5,16 @@ import { Mail, Phone, Globe, Droplets } from 'lucide-react';
 
 const Footer = () => {
   return (
-    <footer className="bg-white border-t border-gray-100 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <footer className="bg-white border-t border-gray-100 py-10 w-full">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center w-full">
         
         {/* Logo */}
-        <div className="flex items-center justify-center space-x-3 mb-4">
+        <div className="flex items-center justify-between space-x-3 w-full mb-4">
+          <div className="bar w-98 h-0.5 bg-gray-400"></div>
           <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
             <Droplets className="w-6 h-6 text-white" />
           </div>
+          <div className="bar w-98 h-0.5 bg-gray-400"></div>
         </div>
 
         {/* Brand Name */}
@@ -25,15 +27,8 @@ const Footer = () => {
           Leading authority in dam engineering and water resource management with innovative solutions.
         </p>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-          <button className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-            Get in touch
-          </button>
-          <button className="bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-lg font-medium border border-gray-200 transition-colors">
-            Schedule a call
-          </button>
-        </div>
+       
+
 
         {/* Contact Info */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-sm text-gray-600">
