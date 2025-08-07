@@ -9,84 +9,84 @@ const loadDB = async () => {
 // Initialize DB connection
 loadDB();
 
-// GET - Fetch all blogs
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const slug = searchParams.get('slug');
-    const category = searchParams.get('category');
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 10;
-    const skip = (page - 1) * limit;
+    const status = searchParams.get('status'); // 'published', 'draft', or null
+    const includeAll = searchParams.get('includeAll'); // for admin dashboard
+    const slug = searchParams.get('slug'); // for single blog
 
+    let query = {};
+    
+    // If requesting a specific blog by slug
     if (slug) {
-      // Get single blog by slug
-      const blog = await BlogModel.findOne({ slug }).lean();
-      
-      if (!blog) {
-        return NextResponse.json({ 
-          success: false,
-          error: "Blog not found" 
-        }, { status: 404 });
-      }
-      
-      return NextResponse.json({ 
-        success: true, 
-        blog 
-      });
-    } else {
-      // Get multiple blogs - FIXED QUERY
-      let query = {  }; // Changed from status to isPublished
-      
-      if (category && category !== 'All') {
-        query.category = category;
-      }
-
-      const [blogs, total] = await Promise.all([
-        BlogModel.find(query)
-          .select('title slug excerpt featuredImage author category tags createdAt isPublished')
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(limit)
-          .lean(),
-        BlogModel.countDocuments(query)
-      ]);
-
-      const totalPages = Math.ceil(total / limit);
-
-      // Add missing fields for BlogList component
-      const blogsWithDefaults = blogs.map(blog => ({
-        ...blog,
-        publishedAt: blog.createdAt, // Use createdAt as publishedAt
-        readingTime: 5, // Default reading time
-        views: 0, // Default views
-        likes: 0, // Default likes
-        featuredImageAlt: blog.title // Use title as alt text
-      }));
-
-      return NextResponse.json({
+      query.slug = slug;
+      const blog = await BlogModel.findOne(query);
+      return Response.json({
         success: true,
-        blogs: blogsWithDefaults,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages,
-          hasNext: page < totalPages,
-          hasPrev: page > 1
-        }
+        blog
       });
     }
+    
+    // Filter logic - THIS IS THE KEY FIX
+    if (includeAll === 'true') {
+      // Admin can see all blogs - no filter
+    } else if (status) {
+      // Filter by specific status
+      if (status === 'published') {
+        query.$or = [
+          { status: 'published' },
+          { isPublished: true }
+        ];
+      } else if (status === 'draft') {
+        query.$or = [
+          { status: 'draft' },
+          { isPublished: false },
+          { isPublished: { $exists: false } }
+        ];
+      }
+    } else {
+      // Default: only published blogs for public (BlogList component)
+      query.$or = [
+        { status: 'published' },
+        { isPublished: true }
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+    
+    const [blogs, total] = await Promise.all([
+      BlogModel.find(query)
+        .sort({ publishedAt: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      BlogModel.countDocuments(query)
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return Response.json({
+      success: true,
+      blogs,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalBlogs: total,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    });
   } catch (error) {
-    console.error("Error in GET handler:", error);
-    return NextResponse.json({ 
-      success: false,
-      error: "Internal server error" 
-    }, { status: 500 });
+    return Response.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
 }
 
-// POST - Create new blog - SIMPLIFIED
+// POST - Create new blog
 export async function POST(request) {
     try {
         const body = await request.json();
@@ -115,7 +115,7 @@ export async function POST(request) {
             slug = `${slug}-${Date.now()}`;
         }
 
-        // Create new blog - MATCH YOUR BLOGEDITOR FIELDS
+        // Create new blog with proper status handling
         const newBlog = new BlogModel({
             title,
             slug,
@@ -124,8 +124,10 @@ export async function POST(request) {
             content: Array.isArray(content) ? content : [],
             category: body.category || 'General',
             tags: body.tags || [],
-            isPublished: body.isPublished || false, // Use isPublished instead of status
+            isPublished: body.isPublished || false,
+            status: body.isPublished ? 'published' : 'draft', // Set both for compatibility
             author: body.author || 'Admin',
+            publishedAt: body.isPublished ? new Date() : null
         });
 
         await newBlog.save();
@@ -147,7 +149,57 @@ export async function POST(request) {
     }
 }
 
-// Add this DELETE function to your existing blog API file (alongside GET and POST)
+// PATCH - Update blog status (for publish/unpublish)
+export async function PATCH(request) {
+    try {
+        const body = await request.json();
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+        const slug = searchParams.get('slug');
+        
+        if (!id && !slug) {
+            return NextResponse.json({ 
+                success: false,
+                error: "Either id or slug is required" 
+            }, { status: 400 });
+        }
+
+        let filter = {};
+        if (id) filter._id = id;
+        if (slug) filter.slug = slug;
+
+        const updateData = {
+            ...body,
+            publishedAt: body.isPublished ? new Date() : null
+        };
+
+        const updatedBlog = await BlogModel.findOneAndUpdate(
+            filter,
+            updateData,
+            { new: true }
+        );
+        
+        if (!updatedBlog) {
+            return NextResponse.json({ 
+                success: false,
+                error: "Blog not found" 
+            }, { status: 404 });
+        }
+
+        return NextResponse.json({ 
+            success: true, 
+            message: "Blog updated successfully",
+            blog: updatedBlog
+        });
+
+    } catch (error) {
+        console.error("Error in PATCH handler:", error);
+        return NextResponse.json({ 
+            success: false,
+            error: "Internal server error" 
+        }, { status: 500 });
+    }
+}
 
 // DELETE - Delete a blog
 export async function DELETE(request) {

@@ -23,15 +23,13 @@ import {
   ChevronRight
 } from "lucide-react";
 
-
 import AdminBlogManager from '@/components/blogmanager';
-
-
+import DashboardContentA from '@/components/Dashbord';
 const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("editor");
 
-  // Your existing BlogEditor state (keeping all original functionality)
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState([]);
   const [isPreview, setIsPreview] = useState(false);
@@ -41,7 +39,7 @@ const AdminDashboard = () => {
   const [featuredImage, setFeaturedImage] = useState("");
   const [tags, setTags] = useState([]);
   const [newTag, setNewTag] = useState("");
-  const [category, setCategory] = useState("General");
+  // REMOVED: const [category, setCategory] = useState("General");
 
   // All your existing BlogEditor functions (unchanged)
   const handleImageUpload = async (file) => {
@@ -195,7 +193,8 @@ const AdminDashboard = () => {
         excerpt: excerpt.trim(),
         content: transformedContent,
         featuredImage: featuredImage.trim(),
-        category: category.trim() || "General",
+        // REMOVED: category: category.trim() || "General",
+        category: "General", // Set default category
         tags: tags.filter((tag) => tag.trim() !== ""),
         status: isPublished ? 'published' : 'draft',
         author: "Admin",
@@ -360,45 +359,18 @@ const AdminDashboard = () => {
     { id: "editor", label: "Blog Editor", icon: FileText },
     { id: "manager", label: "Manage Blogs", icon: List },
     { id: "media", label: "Media Library", icon: Upload },
-    { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "users", label: "Users", icon: Users },
-    { id: "settings", label: "Settings", icon: Settings },
   ];
 
   // Mock Blog Manager Component (replace this with your actual AdminBlogManager component)
   const renderBlogManager = () => <AdminBlogManager />;
 
   // Dashboard content
-  const DashboardContent = () => (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Dashboard</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {[
-          { title: "Total Blogs", value: "24", color: "bg-blue-500" },
-          { title: "Published", value: "18", color: "bg-green-500" },
-          { title: "Drafts", value: "6", color: "bg-yellow-500" },
-          { title: "Views", value: "1,234", color: "bg-purple-500" },
-        ].map((stat) => (
-          <div key={stat.title} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
-                <FileText className="w-6 h-6 text-white" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
+  const DashboardContent = () => <DashboardContentA />;
   const renderMainContent = () => {
     switch (activeTab) {
       case "dashboard":
-        return <DashboardContent />;
+        return DashboardContent();
       case "manager":
         return renderBlogManager();
       case "media":
@@ -408,13 +380,7 @@ const AdminDashboard = () => {
             <p className="text-gray-600">Media management coming soon...</p>
           </div>
         );
-      case "analytics":
-        return (
-          <div className="p-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Analytics</h1>
-            <p className="text-gray-600">Analytics dashboard coming soon...</p>
-          </div>
-        );
+     
       case "users":
         return (
           <div className="p-6">
@@ -422,13 +388,7 @@ const AdminDashboard = () => {
             <p className="text-gray-600">User management coming soon...</p>
           </div>
         );
-      case "settings":
-        return (
-          <div className="p-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Settings</h1>
-            <p className="text-gray-600">Settings panel coming soon...</p>
-          </div>
-        );
+      
       case "editor":
       default:
         return (
@@ -498,54 +458,34 @@ const AdminDashboard = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Featured Image
-                    </label>
-                    <div className="space-y-2">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e.target.files[0])}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                      <input
-                        type="text"
-                        value={featuredImage}
-                        onChange={(e) => setFeaturedImage(e.target.value)}
-                        placeholder="Or enter image URL..."
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                      {featuredImage && (
-                        <div className="mt-2">
-                          <img
-                            src={featuredImage}
-                            alt="Preview"
-                            className="w-full h-32 object-cover rounded-lg"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Category
-                    </label>
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
-                    >
-                      <option value="General">General</option>
-                      <option value="Technology">Technology</option>
-                      <option value="Business">Business</option>
-                      <option value="Health">Health</option>
-                      <option value="Travel">Travel</option>
-                      <option value="Food">Food</option>
-                      <option value="Lifestyle">Lifestyle</option>
-                      <option value="Education">Education</option>
-                    </select>
+                {/* Featured Image */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Featured Image
+                  </label>
+                  <div className="space-y-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e.target.files[0])}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={featuredImage}
+                      onChange={(e) => setFeaturedImage(e.target.value)}
+                      placeholder="Or enter image URL..."
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    {featuredImage && (
+                      <div className="mt-2">
+                        <img
+                          src={featuredImage}
+                          alt="Preview"
+                          className="w-full h-32 object-cover rounded-lg"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Clock, User, Calendar, Eye, Heart } from "lucide-react";
-
+import Head from "next/head";
 const BlogList = () => {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +38,8 @@ const BlogList = () => {
       const queryParams = new URLSearchParams({
         page: filters.page.toString(),
         limit: filters.limit.toString(),
+        // IMPORTANT: Do NOT include includeAll=true here
+        // This ensures only published blogs are shown to public
       });
 
       if (filters.category && filters.category !== "All") {
@@ -52,7 +54,11 @@ const BlogList = () => {
       console.log("API Response:", data);
 
       if (data.success) {
-        setBlogs(data.blogs || []);
+        // Additional client-side filter to ensure only published blogs show
+        const publishedBlogs = (data.blogs || []).filter(blog =>
+          blog.status === 'published' || blog.isPublished === true
+        );
+        setBlogs(publishedBlogs);
         setPagination(data.pagination || {});
       } else {
         throw new Error(data.error || "Failed to fetch blogs");
@@ -103,20 +109,22 @@ const BlogList = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="head w-full h-18 bg-gray-200"></div>
+      
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-7 py-7">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-3">All Blogs</h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Discover the latest insights and stories from our team.
+              Discover the latest insights, Reaserches and stories.
             </p>
           </div>
         </div>
       </div>
+
+      {/* Debug Button - Remove in production */}
       <button
-      className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors"
+        className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors z-50"
         onClick={() => {
           fetch("/api/blogs")
             .then((r) => r.json())
@@ -125,8 +133,7 @@ const BlogList = () => {
       >
         Test API
       </button>
-      
-       
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Category Filters */}
         <div className="mb-8">
@@ -135,11 +142,10 @@ const BlogList = () => {
               <button
                 key={category}
                 onClick={() => handleFilterChange({ category })}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  filters.category === category
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filters.category === category
                     ? "bg-blue-600 text-white"
                     : "bg-white text-gray-600 border border-gray-300 hover:bg-blue-50"
-                }`}
+                  }`}
               >
                 {category}
               </button>
@@ -149,9 +155,39 @@ const BlogList = () => {
 
         {/* Loading */}
         {loading && (
-          <div className="text-center py-12">
-            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading blogs...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array.from({ length: filters.limit }).map((_, index) => (
+              <div key={index} className="animate-pulse bg-white rounded-xl border p-6 space-y-4">
+                <div className="h-48 bg-gray-200 rounded w-full"></div>
+                <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-full"></div>
+                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {!loading && pagination.totalPages > 1 && (
+          <div className="flex justify-center items-center gap-4 mb-8">
+            <button
+              onClick={() => handleFilterChange({ page: filters.page - 1 })}
+              disabled={!pagination.hasPrev}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Previous
+            </button>
+            <span className="text-gray-600">
+              Page {pagination.currentPage} of {pagination.totalPages}
+            </span>
+            <button
+              onClick={() => handleFilterChange({ page: filters.page + 1 })}
+              disabled={!pagination.hasNext}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Next
+            </button>
           </div>
         )}
 
@@ -161,10 +197,13 @@ const BlogList = () => {
             {blogs.length === 0 ? (
               <div className="text-center py-12">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  No blogs found
+                  No published blogs found
                 </h3>
                 <p className="text-gray-600">
-                  Try a different category or create some blogs first!
+                  {filters.category !== "All"
+                    ? `No published blogs found in "${filters.category}" category.`
+                    : "No published blogs available at the moment."
+                  }
                 </p>
               </div>
             ) : (
@@ -189,6 +228,12 @@ const BlogList = () => {
                             {blog.category}
                           </span>
                         </div>
+                        {/* Published indicator - only shows published blogs anyway */}
+                        <div className="absolute top-4 right-4">
+                          <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                            Published
+                          </span>
+                        </div>
                       </div>
                     </Link>
 
@@ -198,7 +243,7 @@ const BlogList = () => {
                       <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
                         <div className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
-                          <time>{formatDate(blog.createdAt)}</time>
+                          <time>{formatDate(blog.publishedAt || blog.createdAt)}</time>
                         </div>
                         <div className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
@@ -229,24 +274,20 @@ const BlogList = () => {
                               #{tag}
                             </span>
                           ))}
+                          {blog.tags.length > 3 && (
+                            <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+                              +{blog.tags.length - 3} more
+                            </span>
+                          )}
                         </div>
                       )}
 
                       {/* Footer */}
                       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <div className="flex items-center gap-1">
-                            <Eye className="w-4 h-4" />
-                            <span>{blog.views || 0}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Heart className="w-4 h-4" />
-                            <span>{blog.likes || 0}</span>
-                          </div>
-                        </div>
+
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <User className="w-4 h-4" />
-                          <span>{blog.author}</span>
+                          <span>{blog.author?.name || "Eng. Haseeb Ahsan"}</span>
                         </div>
                       </div>
                     </div>
@@ -260,5 +301,13 @@ const BlogList = () => {
     </div>
   );
 };
+
+<Head>
+  <title>All Blogs | Haseeb's Blog</title>
+  <meta name="description" content="Read expert insights and practical tips on dam management, water resources, water fields, crop watering, and more. Stay updated with the latest trends all curated by Haseeb Ahsan." />
+  <meta name="keywords" content="dam, water reasorses, water fields, crops watring" />
+  <meta name="author" content="Haseeb Ahsan" />
+</Head>
+
 
 export default BlogList;

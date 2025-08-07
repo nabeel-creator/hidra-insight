@@ -184,7 +184,7 @@ const BlogPostPage = ({ params }) => {
 
   return (
     <article className="min-h-screen bg-white">
-      <div className="head w-full h-18 bg-gray-200"></div>
+      
       {/* Navigation */}
       <nav className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-7 py-3">
@@ -203,11 +203,8 @@ const BlogPostPage = ({ params }) => {
             
             {/* Article Header */}
             <header className="mb-8">
-              {/* Category & Meta */}
+              {/* Category & Meta - REMOVED: Category badge */}
               <div className="flex flex-wrap items-center gap-4 mb-4">
-                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                  {data.category}
-                </span>
                 <div className="flex items-center text-gray-500 text-sm">
                   <Calendar className="w-4 h-4 mr-1" />
                   <time dateTime={data.createdAt}>
@@ -218,7 +215,6 @@ const BlogPostPage = ({ params }) => {
                   <Clock className="w-4 h-4 mr-1" />
                   <span>6 min read</span>
                 </div>
-                
               </div>
 
               {/* Title */}
