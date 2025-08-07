@@ -91,6 +91,8 @@ export async function POST(request) {
     try {
         const body = await request.json();
         
+        console.log("Received blog data:", body); // Debug log
+        
         // Simple validation
         const { title, excerpt, featuredImage, content } = body;
         if (!title || !excerpt || !featuredImage) {
@@ -109,43 +111,56 @@ export async function POST(request) {
                 .replace(/^-|-$/g, '');
         }
 
-        // Check if slug already exists
-        const existingBlog = await BlogModel.findOne({ slug });
-        if (existingBlog) {
-            slug = `${slug}-${Date.now()}`;
+        // Check if slug already exists and generate unique slug
+        let uniqueSlug = slug;
+        let counter = 1;
+        while (await BlogModel.findOne({ slug: uniqueSlug })) {
+            uniqueSlug = `${slug}-${counter}`;
+            counter++;
         }
+        slug = uniqueSlug;
 
         // Create new blog with proper status handling
-        const newBlog = new BlogModel({
+        const blogData = {
             title,
             slug,
             excerpt,
             featuredImage,
             content: Array.isArray(content) ? content : [],
-            category: body.category || 'General',
+            category: body.category || 'General', // Default to General
             tags: body.tags || [],
             isPublished: body.isPublished || false,
-            status: body.isPublished ? 'published' : 'draft', // Set both for compatibility
+            status: body.isPublished ? 'published' : 'draft',
             author: body.author || 'Admin',
+            featuredImageAlt: body.featuredImageAlt || '',
             publishedAt: body.isPublished ? new Date() : null
-        });
+        };
 
+        console.log("Creating blog with data:", blogData); // Debug log
+
+        const newBlog = new BlogModel(blogData);
         await newBlog.save();
 
         return NextResponse.json({ 
             success: true, 
-            message: "Blog created successfully",
+            message: `Blog ${body.isPublished ? 'published' : 'saved as draft'} successfully`,
             blog: newBlog
         }, { status: 201 });
 
     } catch (error) {
         console.error("Error in POST handler:", error);
         if (error.name === 'ValidationError') {
+            const validationErrors = Object.keys(error.errors).map(key => {
+                return `${key}: ${error.errors[key].message}`;
+            }).join(', ');
+            
             return NextResponse.json({ 
-                error: "Validation error: " + error.message 
+                error: "Validation error: " + validationErrors 
             }, { status: 400 });
         }
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return NextResponse.json({ 
+            error: "Internal server error: " + error.message 
+        }, { status: 500 });
     }
 }
 

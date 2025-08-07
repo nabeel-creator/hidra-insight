@@ -120,6 +120,7 @@ const AdminDashboard = () => {
   const removeTag = (tagToRemove) => {
     setTags(tags.filter((tag) => tag !== tagToRemove));
   };
+  
 
   const saveBlog = async () => {
     try {
@@ -187,19 +188,23 @@ const AdminDashboard = () => {
         return;
       }
 
+      // FIXED: Properly structure the blog data
       const blogData = {
         title: title.trim(),
         slug: slug.trim() || generateSlug(title),
         excerpt: excerpt.trim(),
         content: transformedContent,
         featuredImage: featuredImage.trim(),
-        // REMOVED: category: category.trim() || "General",
-        category: "General", // Set default category
+        category: "General", // This now matches the schema enum
         tags: tags.filter((tag) => tag.trim() !== ""),
+        // Send both fields for compatibility
         status: isPublished ? 'published' : 'draft',
+        isPublished: isPublished,
         author: "Admin",
         featuredImageAlt: "",
       };
+
+      console.log("Sending blog data:", blogData); // Debug log
 
       const response = await fetch("/api/blogs", {
         method: "POST",
@@ -212,8 +217,17 @@ const AdminDashboard = () => {
       const result = await response.json();
 
       if (response.ok) {
-        alert("Blog saved successfully!");
+        alert(`Blog ${isPublished ? 'published' : 'saved as draft'} successfully!`);
         console.log("Blog saved:", result);
+
+        // Optional: Clear the form after successful save
+        // setTitle("");
+        // setSlug("");
+        // setExcerpt("");
+        // setContent([]);
+        // setFeaturedImage("");
+        // setTags([]);
+        // setIsPublished(false);
       } else {
         throw new Error(result.error || "Failed to save blog");
       }
@@ -222,7 +236,6 @@ const AdminDashboard = () => {
       alert("Error saving blog: " + error.message);
     }
   };
-
   const renderContentBlock = (block) => {
     const commonProps = {
       value: block.content,
@@ -358,7 +371,6 @@ const AdminDashboard = () => {
     { id: "dashboard", label: "Dashboard", icon: Home },
     { id: "editor", label: "Blog Editor", icon: FileText },
     { id: "manager", label: "Manage Blogs", icon: List },
-    { id: "media", label: "Media Library", icon: Upload },
     { id: "users", label: "Users", icon: Users },
   ];
 
@@ -373,14 +385,6 @@ const AdminDashboard = () => {
         return DashboardContent();
       case "manager":
         return renderBlogManager();
-      case "media":
-        return (
-          <div className="p-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Media Library</h1>
-            <p className="text-gray-600">Media management coming soon...</p>
-          </div>
-        );
-     
       case "users":
         return (
           <div className="p-6">
@@ -388,7 +392,7 @@ const AdminDashboard = () => {
             <p className="text-gray-600">User management coming soon...</p>
           </div>
         );
-      
+
       case "editor":
       default:
         return (
@@ -707,8 +711,8 @@ const AdminDashboard = () => {
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${activeTab === item.id
-                    ? 'bg-blue-100 text-blue-700 font-medium'
-                    : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-blue-100 text-blue-700 font-medium'
+                  : 'text-gray-600 hover:bg-gray-100'
                   }`}
               >
                 <Icon size={20} />

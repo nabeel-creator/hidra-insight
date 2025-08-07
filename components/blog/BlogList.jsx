@@ -109,7 +109,7 @@ const BlogList = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      
+
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-7 py-7">
@@ -122,36 +122,9 @@ const BlogList = () => {
         </div>
       </div>
 
-      {/* Debug Button - Remove in production */}
-      <button
-        className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors z-50"
-        onClick={() => {
-          fetch("/api/blogs")
-            .then((r) => r.json())
-            .then((d) => console.log("Test API:", d));
-        }}
-      >
-        Test API
-      </button>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Category Filters */}
-        <div className="mb-8">
-          <div className="flex flex-wrap gap-2 justify-center">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => handleFilterChange({ category })}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filters.category === category
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-600 border border-gray-300 hover:bg-blue-50"
-                  }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
+
 
         {/* Loading */}
         {loading && (
@@ -223,17 +196,7 @@ const BlogList = () => {
                           className="object-cover hover:scale-105 transition-transform duration-300"
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         />
-                        <div className="absolute top-4 left-4">
-                          <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                            {blog.category}
-                          </span>
-                        </div>
-                        {/* Published indicator - only shows published blogs anyway */}
-                        <div className="absolute top-4 right-4">
-                          <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                            Published
-                          </span>
-                        </div>
+                                           
                       </div>
                     </Link>
 
@@ -295,19 +258,19 @@ const BlogList = () => {
                 ))}
               </div>
             )}
+
           </>
         )}
       </div>
+            <Head>
+              <title>All Blogs | Haseeb's Blog</title>
+              <meta name="description" content="Read expert insights and practical tips on dam management, water resources, water fields, crop watering, and more. Stay updated with the latest trends all curated by Haseeb Ahsan." />
+              <meta name="keywords" content="dam, water reasorses, water fields, crops watring" />
+              <meta name="author" content="Haseeb Ahsan" />
+            </Head>
     </div>
   );
 };
-
-<Head>
-  <title>All Blogs | Haseeb's Blog</title>
-  <meta name="description" content="Read expert insights and practical tips on dam management, water resources, water fields, crop watering, and more. Stay updated with the latest trends all curated by Haseeb Ahsan." />
-  <meta name="keywords" content="dam, water reasorses, water fields, crops watring" />
-  <meta name="author" content="Haseeb Ahsan" />
-</Head>
 
 
 export default BlogList;

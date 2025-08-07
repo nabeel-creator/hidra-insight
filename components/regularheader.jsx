@@ -21,7 +21,7 @@ const RegularHeader = () => {
 
   return (
     <>
-      <nav className="sticky top-0 z-30 bg-white shadow-md">
+      <nav className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-18">
             {/* Logo */}
@@ -107,9 +107,7 @@ const RegularHeader = () => {
                     {[
                       { icon: Facebook, name: 'Facebook' },
                       { icon: Twitter, name: 'Twitter' },
-                      { icon: Instagram, name: 'Instagram' },
                       { icon: Linkedin, name: 'LinkedIn' },
-                      { icon: Youtube, name: 'YouTube' }
                     ].map(({ icon: Icon, name }) => (
                       <a
                         key={name}
